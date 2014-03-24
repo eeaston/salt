@@ -582,6 +582,12 @@ def run(name,
             ret.update(cret)
             return ret
 
+        # Check for working directory _after_ checking pre-conditions, as conceivably it 
+        # may only be created by a precondition that itself is invalidated by this action. 
+        if cwd and not os.path.isdir(cwd):
+            ret['comment'] = 'Desired working directory "{0}" is not available'.format(cwd)
+            return ret
+
         # Wow, we passed the test, run this sucker!
         if not __opts__['test']:
             try:
