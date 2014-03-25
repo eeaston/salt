@@ -519,10 +519,6 @@ def run(name,
            'result': False,
            'comment': ''}
 
-    if cwd and not os.path.isdir(cwd):
-        ret['comment'] = 'Desired working directory "{0}" is not available'.format(cwd)
-        return ret
-
     if env:
         if isinstance(env, basestring):
             try:
@@ -568,8 +564,7 @@ def run(name,
     if HAS_GRP:
         pgid = os.getegid()
 
-    cmd_kwargs = {'cwd': cwd,
-                  'runas': user,
+    cmd_kwargs = {'runas': user,
                   'shell': shell or __grains__['shell'],
                   'env': env,
                   'umask': umask,
@@ -584,10 +579,10 @@ def run(name,
 
         # Check for working directory _after_ checking pre-conditions, as conceivably it 
         # may only be created by a precondition that itself is invalidated by this action. 
-
         if cwd and not os.path.isdir(cwd):
             ret['comment'] = 'Desired working directory "{0}" is not available'.format(cwd)
             return ret
+        cmd_kwargs['cwd'] = cwd
 
         # Wow, we passed the test, run this sucker!
         if not __opts__['test']:
@@ -690,9 +685,6 @@ def script(name,
            'name': name,
            'result': False}
 
-    if cwd and not os.path.isdir(cwd):
-        ret['comment'] = 'Desired working directory "{0}" is not available'.format(cwd)
-        return ret
 
     if isinstance(env, string_types):
         msg = (
@@ -717,14 +709,12 @@ def script(name,
                        'unless': unless,
                        'user': user,
                        'group': group,
-                       'cwd': cwd,
                        'template': template,
                        'umask': umask,
                        'timeout': timeout,
                        '__env__': __env__})
 
     run_check_cmd_kwargs = {
-        'cwd': cwd,
         'runas': user,
         'shell': shell or __grains__['shell']
     }
@@ -744,6 +734,13 @@ def script(name,
         if isinstance(cret, dict):
             ret.update(cret)
             return ret
+
+        # Check for working directory _after_ checking pre-conditions, as conceivably it 
+        # may only be created by a precondition that itself is invalidated by this action. 
+        if cwd and not os.path.isdir(cwd):
+            ret['comment'] = 'Desired working directory "{0}" is not available'.format(cwd)
+            return ret
+        cmd_kwargs['cwd'] = cwd
 
         if __opts__['test']:
             ret['result'] = None
